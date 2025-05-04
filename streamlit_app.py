@@ -8,10 +8,28 @@ st.title("🎓 Haas AI-Powered Course Planner")
 st.write("Upload your course catalog and materials, and we'll recommend the best classes for you!")
 
 # Uploads
-course_catalog_file = st.file_uploader("Upload Haas Course Catalog (Excel)", type=["xlsx"])
-course_info_files = st.file_uploader("Upload Course Descriptions and Reviews (PDF only)", type=["pdf"], accept_multiple_files=True)
-resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
+st.subheader("📚 Course Data Collection")
 
+# Simulated scraping buttons
+if "scraped_catalog" not in st.session_state:
+    st.session_state.scraped_catalog = False
+if "scraped_reviews" not in st.session_state:
+    st.session_state.scraped_reviews = False
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("🔎 Scrape Course Catalog"):
+        st.session_state.scraped_catalog = True
+        st.success("✅ Course catalog successfully scraped from the system!")
+
+with col2:
+    if st.button("🔎 Scrape Course Reviews"):
+        st.session_state.scraped_reviews = True
+        st.success("✅ Course reviews successfully scraped from the system!")
+
+# Upload resume still real (we need some user input)
+resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 # Setup for dynamic preferred times
 if "time_preferences" not in st.session_state:
     st.session_state.time_preferences = [{"times": [], "days": {day: False for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}}]
