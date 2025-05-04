@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import docx2txt
 import PyPDF2
 
 st.set_page_config(page_title="Haas AI Course Planner", page_icon="📚")
@@ -10,8 +9,8 @@ st.write("Upload your materials and we'll recommend the best classes for you!")
 
 # Uploads
 course_catalog_file = st.file_uploader("Upload Haas Course Catalog (Excel)", type=["xlsx"])
-course_info_files = st.file_uploader("Upload Course Descriptions and Reviews (PDF or DOCX)", type=["pdf", "docx"], accept_multiple_files=True)
-resume_file = st.file_uploader("Upload Your Resume (PDF or DOCX)", type=["pdf", "docx"])
+course_info_files = st.file_uploader("Upload Course Descriptions and Reviews (PDF only)", type=["pdf"], accept_multiple_files=True)
+resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 
 # User Inputs
 units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
@@ -34,9 +33,6 @@ def extract_text_from_pdf(file):
         text += page.extract_text()
     return text
 
-def extract_text_from_docx(file):
-    return docx2txt.process(file)
-
 if submit:
     if not course_catalog_file:
         st.error("Please upload a course catalog file.")
@@ -50,18 +46,12 @@ if submit:
         # Extract text from uploaded course descriptions
         course_info_text = ""
         for uploaded_file in course_info_files:
-            if uploaded_file.name.endswith(".pdf"):
-                course_info_text += extract_text_from_pdf(uploaded_file)
-            elif uploaded_file.name.endswith(".docx"):
-                course_info_text += extract_text_from_docx(uploaded_file)
+            course_info_text += extract_text_from_pdf(uploaded_file)
 
         # Extract text from resume (optional)
         resume_text = ""
         if resume_file:
-            if resume_file.name.endswith(".pdf"):
-                resume_text = extract_text_from_pdf(resume_file)
-            elif resume_file.name.endswith(".docx"):
-                resume_text = extract_text_from_docx(resume_file)
+            resume_text = extract_text_from_pdf(resume_file)
 
         # Combine all focus areas for matching
         combined_focus_text = focus_areas + " " + resume_text
