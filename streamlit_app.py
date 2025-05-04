@@ -41,22 +41,14 @@ for idx, pref in enumerate(st.session_state.time_preferences):
     )
     st.session_state.time_preferences[idx]["times"] = selected_times
 
-    # Days - Buttons
+    # Days - Checkboxes
     st.write("Select Days:")
     day_cols = st.columns(7)
     for i, day in enumerate(short_days):
-        if day_cols[i].button(
-            f"{day}",
-            key=f"daybutton_{idx}_{day}",
-            use_container_width=True
-        ):
-            # Flip the day state
-            st.session_state.time_preferences[idx]["days"][day] = not st.session_state.time_preferences[idx]["days"][day]
+        checked = st.session_state.time_preferences[idx]["days"][day]
+        new_checked = day_cols[i].checkbox(day, value=checked, key=f"day_{idx}_{day}_checkbox")
+        st.session_state.time_preferences[idx]["days"][day] = new_checked
 
-    # Show which days are selected
-    selected_days = [days_of_week[i] for i, day in enumerate(short_days) if st.session_state.time_preferences[idx]["days"][day]]
-    st.write("Selected Days:", ", ".join(selected_days))
-    st.session_state.time_preferences[idx]["selected_day_names"] = selected_days
 
 # Other Inputs
 units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
