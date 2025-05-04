@@ -14,26 +14,33 @@ resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 
 # Setup for dynamic preferred times
 if "time_preferences" not in st.session_state:
-    st.session_state.time_preferences = [{"time": "", "days": []}]
+    st.session_state.time_preferences = [{"times": [], "days": []}]
 
 time_options = ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
-days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+short_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 st.subheader("🕰️ Preferred Times and Days")
 for idx, pref in enumerate(st.session_state.time_preferences):
-    cols = st.columns([2, 3])
+    st.markdown(f"**Preference #{idx+1}**")
+    cols = st.columns([2, 5])
     with cols[0]:
-        selected_time = st.selectbox(f"Select Time #{idx+1}", time_options, key=f"time_{idx}")
+        selected_times = st.multiselect(f"Select Time(s) for Preference #{idx+1}", time_options, key=f"time_{idx}")
     with cols[1]:
-        selected_days = st.multiselect(f"Select Days for Time #{idx+1}", days_of_week, key=f"days_{idx}")
-    st.session_state.time_preferences[idx]["time"] = selected_time
-    st.session_state.time_preferences[idx]["days"] = selected_days
+        day_selection = []
+        day_cols = st.columns(7)
+        for i, day in enumerate(short_days):
+            toggle = day_cols[i].toggle(day, key=f"day_{idx}_{day}")
+            if toggle:
+                day_selection.append(days_of_week[i])
+    st.session_state.time_preferences[idx]["times"] = selected_times
+    st.session_state.time_preferences[idx]["days"] = day_selection
 
 add_row = st.button("➕ Add Another Time Preference")
 remove_row = st.button("➖ Remove Last Time Preference")
 
 if add_row:
-    st.session_state.time_preferences.append({"time": "", "days": []})
+    st.session_state.time_preferences.append({"times": [], "days": []})
 if remove_row and len(st.session_state.time_preferences) > 1:
     st.session_state.time_preferences.pop()
 
@@ -53,8 +60,10 @@ def extract_text_from_pdf(file):
 def matches_preferred_times(course_days, course_time, time_preferences):
     for pref in time_preferences:
         for day in pref["days"]:
-            if day in course_days and pref["time"].split()[0] in course_time:
-                return True
+            if day in course_days:
+                for time_pref in pref["times"]:
+                    if time_pref.split()[0] in course_time:
+                        return True
     return False
 
 if submit:
@@ -86,7 +95,7 @@ if submit:
         else:
             recommended_courses = matching_courses
 
-        # New filtering based on preferred times and days
+        # New filtering based on dynamic preferred times and days
         filtered_courses = []
         for idx, row in recommended_courses.iterrows():
             course_days = row['Days'] if pd.notna(row['Days']) else ""
