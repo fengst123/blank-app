@@ -12,18 +12,36 @@ course_catalog_file = st.file_uploader("Upload Haas Course Catalog (Excel)", typ
 course_info_files = st.file_uploader("Upload Course Descriptions and Reviews (PDF only)", type=["pdf"], accept_multiple_files=True)
 resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 
-# User Inputs
-units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
+# Setup for dynamic preferred times
+if "time_preferences" not in st.session_state:
+    st.session_state.time_preferences = [{"time": "", "days": []}]
 
-st.write("Select your preferred times for each day:")
-day_time_preferences = {}
+time_options = [
+    "8:00–9:30 AM", "9:30–11:00 AM", "11:00–12:30 PM",
+    "12:30–2:00 PM", "2:00–3:30 PM", "3:30–5:00 PM", "5:00–6:30 PM", "6:30–8:00 PM"
+]
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-time_options = ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
 
-for day in days_of_week:
-    selected_times = st.multiselect(f"{day}:", time_options, key=day)
-    day_time_preferences[day] = selected_times
+st.subheader("🕰️ Preferred Times and Days")
+for idx, pref in enumerate(st.session_state.time_preferences):
+    cols = st.columns([2, 3])
+    with cols[0]:
+        selected_time = st.selectbox(f"Select Time #{idx+1}", time_options, key=f"time_{idx}")
+    with cols[1]:
+        selected_days = st.multiselect(f"Select Days for Time #{idx+1}", days_of_week, key=f"days_{idx}")
+    st.session_state.time_preferences[idx]["time"] = selected_time
+    st.session_state.time_preferences[idx]["days"] = selected_days
 
+add_row = st.button("➕ Add Another Time Preference")
+remove_row = st.button("➖ Remove Last Time Preference")
+
+if add_row:
+    st.session_state.time_preferences.append({"time": "", "days": []})
+if remove_row and len(st.session_state.time_preferences) > 1:
+    st.session_state.time_preferences.pop()
+
+# Other Inputs
+units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
 focus_areas = st.text_area("What do you want to focus on this semester? (e.g., AI, Finance, Entrepreneurship)")
 
 submit = st.button("Generate Recommended Schedule")
@@ -35,12 +53,11 @@ def extract_text_from_pdf(file):
         text += page.extract_text()
     return text
 
-def match_day_time(course_days, course_time, preferences):
-    for day in days_of_week:
-        if day in course_days:
-            for pref in preferences[day]:
-                if pref.split()[0] in course_time:
-                    return True
+def matches_preferred_times(course_days, course_time, time_preferences):
+    for pref in time_preferences:
+        for day in pref["days"]:
+            if day in course_days and pref["time"].split('–')[0] in course_time:
+                return True
     return False
 
 if submit:
@@ -50,10 +67,9 @@ if submit:
         # Load Course Catalog
         course_catalog = pd.read_excel(course_catalog_file)
 
-        # Assume course_catalog has columns: 'Course Name', 'Units', 'Times', 'Days'
         st.success("Course catalog loaded!")
 
-        # Extract course info and resume text
+        # Extract text from uploads
         course_info_text = ""
         if course_info_files:
             for uploaded_file in course_info_files:
@@ -63,29 +79,27 @@ if submit:
         if resume_file:
             resume_text = extract_text_from_pdf(resume_file)
 
-        # Combine focus areas + resume for better matching
         combined_focus_text = focus_areas + " " + resume_text
 
-        # Matching logic
         matching_courses = course_catalog[course_catalog['Course Name'].str.contains(focus_areas, case=False, na=False)]
 
         if matching_courses.empty:
-            st.warning("No perfect matches found. Showing some popular courses instead.")
+            st.warning("No perfect matches found. Showing random courses instead.")
             recommended_courses = course_catalog.sample(min(5, len(course_catalog)))
         else:
             recommended_courses = matching_courses
 
-        # Filter by preferred days and times using the new day-time preferences
+        # New filtering based on dynamic preferred times and days
         filtered_courses = []
         for idx, row in recommended_courses.iterrows():
             course_days = row['Days'] if pd.notna(row['Days']) else ""
             course_time = row['Times'] if pd.notna(row['Times']) else ""
-            if match_day_time(course_days, course_time, day_time_preferences):
+            if matches_preferred_times(course_days, course_time, st.session_state.time_preferences):
                 filtered_courses.append(row)
 
         recommended_courses = pd.DataFrame(filtered_courses)
 
-        # Try to fit into unit needs (basic approach)
+        # Try to fit into unit needs
         selected_courses = []
         total_units = 0
 
@@ -94,15 +108,14 @@ if submit:
                 selected_courses.append(row)
                 total_units += row['Units']
 
-        # Display Selected Courses
         if selected_courses:
             st.subheader("🎓 Your Recommended Courses")
             selected_df = pd.DataFrame(selected_courses)
             st.dataframe(selected_df[['Course Name', 'Units', 'Times', 'Days']])
         else:
-            st.error("Couldn't meet unit requirement with available courses. Try adjusting your focus area or preferred schedule.")
+            st.error("Couldn't meet unit requirement with available courses. Try adjusting your preferences.")
 
-        # Placeholder for Email
+        # Email Placeholder
         st.markdown("---")
         st.subheader("📧 Send Your Schedule")
         email = st.text_input("Enter your email address to receive your recommended schedule:")
@@ -114,5 +127,5 @@ if submit:
 st.markdown("""
 ---
 
-*This is a demo version. Actual NLP matching based on resume parsing and course review sentiment analysis can be added in a full implementation!*
+*This is a demo version. Full NLP matching and auto-scheduling logic could be added in a full system!*
 """)
