@@ -54,14 +54,18 @@ for idx, pref in enumerate(st.session_state.time_preferences):
 units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
 focus_areas = st.text_area("What do you want to focus on this semester? (e.g., AI, Finance, Entrepreneurship)")
 
-submit = st.button("Generate Recommended Schedule")
+# Setup session state for submit
+if "submitted" not in st.session_state:
+    st.session_state.submitted = False
 
-if submit:
+if st.button("Generate Recommended Schedule"):
+    st.session_state.submitted = True
+
+if st.session_state.submitted:
     st.success("✅ Files uploaded and preferences captured!")
 
     st.subheader("🎯 Recommended Schedule")
 
-    # Hardcoded real output for your profile
     courses = [
         {"Course Name": "Negotiations and Conflict Resolution", "Units": 2, "Days": "Mon", "Times": "8AM–11AM", "Why Take This Class": "Build influence, persuasion, and conflict management — essential soft skills for PMs and leaders."},
         {"Course Name": "Managing the New Product Development Process", "Units": 3, "Days": "Mon & Wed", "Times": "11AM–12:30PM", "Why Take This Class": "Learn frameworks for ideating, building, and launching new products — core PM skillset."},
@@ -71,19 +75,18 @@ if submit:
         {"Course Name": "Tech and the City", "Units": 3, "Days": "Tues & Thurs", "Times": "11AM–12:30PM", "Why Take This Class": "Explore how tech drives urban innovation — broadens strategic thinking about product ecosystems."},
     ]
 
-    # Convert to DataFrame for display
     courses_df = pd.DataFrame(courses)
     st.dataframe(courses_df)
 
-    # Email placeholder
     st.markdown("---")
     st.subheader("📧 Send Your Schedule")
     email = st.text_input("Enter your email address to receive your recommended schedule:")
-    send_email = st.button("Send Schedule")
 
-    if send_email:
-        st.success(f"Schedule would be emailed to {email} (placeholder)")
-
+    if st.button("Send Schedule"):
+        if email:
+            st.success(f"📧 Your schedule would be emailed to {email} (placeholder).")
+        else:
+            st.error("Please enter a valid email address.")
 
 st.markdown("""
 ---
