@@ -16,10 +16,7 @@ resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 if "time_preferences" not in st.session_state:
     st.session_state.time_preferences = [{"time": "", "days": []}]
 
-time_options = [
-    "8:00–9:30 AM", "9:30–11:00 AM", "11:00–12:30 PM",
-    "12:30–2:00 PM", "2:00–3:30 PM", "3:30–5:00 PM", "5:00–6:30 PM", "6:30–8:00 PM"
-]
+time_options = ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
 days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
 st.subheader("🕰️ Preferred Times and Days")
@@ -56,7 +53,7 @@ def extract_text_from_pdf(file):
 def matches_preferred_times(course_days, course_time, time_preferences):
     for pref in time_preferences:
         for day in pref["days"]:
-            if day in course_days and pref["time"].split('–')[0] in course_time:
+            if day in course_days and pref["time"].split()[0] in course_time:
                 return True
     return False
 
@@ -89,7 +86,7 @@ if submit:
         else:
             recommended_courses = matching_courses
 
-        # New filtering based on dynamic preferred times and days
+        # New filtering based on preferred times and days
         filtered_courses = []
         for idx, row in recommended_courses.iterrows():
             course_days = row['Days'] if pd.notna(row['Days']) else ""
