@@ -131,4 +131,13 @@ if submit:
         st.markdown("---")
         st.subheader("📧 Send Your Schedule")
         email = st.text_input("Enter your email address to receive your recommended schedule:")
-        send_email = st.button("Send Schedule")_
+        send_email = st.button("Send Schedule")
+
+        if send_email:
+            st.success(f"Schedule would be emailed to {email} (placeholder)")
+
+st.markdown("""
+---
+
+*This is a demo version. Full NLP matching and auto-scheduling logic could be added in a full system!*
+""")
