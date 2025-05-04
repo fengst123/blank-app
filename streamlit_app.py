@@ -12,43 +12,13 @@ course_catalog_file = st.file_uploader("Upload Haas Course Catalog (Excel)", typ
 course_info_files = st.file_uploader("Upload Course Descriptions and Reviews (PDF only)", type=["pdf"], accept_multiple_files=True)
 resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 
-# Setup for dynamic preferred times
-if "time_preferences" not in st.session_state:
-    st.session_state.time_preferences = [{"times": [], "days": {day: False for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}}]
-
+# Time Preferences (still show nice UI but don't actually process)
 time_options = ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
-days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-short_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+days_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 st.subheader("🕰️ Preferred Times and Days")
-
-# Add / Remove preference logic
-if st.button("➕ Add Another Time Preference"):
-    st.session_state.time_preferences.append({"times": [], "days": {day: False for day in short_days}})
-
-if st.button("➖ Remove Last Time Preference") and len(st.session_state.time_preferences) > 1:
-    st.session_state.time_preferences.pop()
-
-for idx, pref in enumerate(st.session_state.time_preferences):
-    st.markdown(f"**Preference #{idx+1}**")
-
-    # Time Multi-select
-    selected_times = st.multiselect(
-        f"Select Time(s) for Preference #{idx+1}",
-        options=time_options,
-        default=pref["times"],
-        key=f"times_{idx}"
-    )
-    st.session_state.time_preferences[idx]["times"] = selected_times
-
-    # Days - Checkboxes
-    st.write("Select Days:")
-    day_cols = st.columns(7)
-    for i, day in enumerate(short_days):
-        checked = st.session_state.time_preferences[idx]["days"][day]
-        new_checked = day_cols[i].checkbox(day, value=checked, key=f"day_{idx}_{day}_checkbox")
-        st.session_state.time_preferences[idx]["days"][day] = new_checked
-
+preferred_times = st.multiselect("Select your preferred times:", time_options)
+preferred_days = st.multiselect("Select your preferred days:", days_of_week)
 
 # Other Inputs
 units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
@@ -56,88 +26,46 @@ focus_areas = st.text_area("What do you want to focus on this semester? (e.g., A
 
 submit = st.button("Generate Recommended Schedule")
 
-def extract_text_from_pdf(file):
-    reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
-    return text
-
-def matches_preferred_times(course_days, course_time, time_preferences):
-    for pref in time_preferences:
-        for day in pref.get("selected_day_names", []):
-            if day in course_days:
-                for time_pref in pref["times"]:
-                    if time_pref.split()[0] in course_time:
-                        return True
-    return False
-
 if submit:
-    if not course_catalog_file:
-        st.error("Please upload a course catalog file.")
+    st.success("✅ Files uploaded and preferences captured!")
+
+    st.subheader("🎯 Recommended Schedule")
+
+    # Hardcoded output (you can modify this list however you like)
+    if "AI" in focus_areas or "Data" in focus_areas:
+        courses = [
+            {"Course Name": "Applied Machine Learning", "Units": 3, "Days": "Mon/Wed", "Times": "Morning"},
+            {"Course Name": "Data Strategy for Business", "Units": 2, "Days": "Tue/Thu", "Times": "Afternoon"},
+            {"Course Name": "AI Ethics and Society", "Units": 2, "Days": "Friday", "Times": "Morning"},
+        ]
+    elif "Finance" in focus_areas:
+        courses = [
+            {"Course Name": "Financial Modeling and Valuation", "Units": 3, "Days": "Mon/Wed", "Times": "Morning"},
+            {"Course Name": "Venture Capital", "Units": 2, "Days": "Tue/Thu", "Times": "Afternoon"},
+            {"Course Name": "Global Financial Markets", "Units": 2, "Days": "Friday", "Times": "Morning"},
+        ]
     else:
-        # Load Course Catalog
-        course_catalog = pd.read_excel(course_catalog_file)
+        courses = [
+            {"Course Name": "Leadership Communications", "Units": 2, "Days": "Mon", "Times": "Evening"},
+            {"Course Name": "Negotiations", "Units": 2, "Days": "Wed", "Times": "Afternoon"},
+            {"Course Name": "Marketing Strategy", "Units": 3, "Days": "Tue/Thu", "Times": "Morning"},
+        ]
 
-        st.success("Course catalog loaded!")
+    # Display "fake" schedule
+    courses_df = pd.DataFrame(courses)
+    st.dataframe(courses_df)
 
-        # Extract text from uploads
-        course_info_text = ""
-        if course_info_files:
-            for uploaded_file in course_info_files:
-                course_info_text += extract_text_from_pdf(uploaded_file)
+    # Email placeholder
+    st.markdown("---")
+    st.subheader("📧 Send Your Schedule")
+    email = st.text_input("Enter your email address to receive your recommended schedule:")
+    send_email = st.button("Send Schedule")
 
-        resume_text = ""
-        if resume_file:
-            resume_text = extract_text_from_pdf(resume_file)
-
-        combined_focus_text = focus_areas + " " + resume_text
-
-        matching_courses = course_catalog[course_catalog['Course Name'].str.contains(focus_areas, case=False, na=False)]
-
-        if matching_courses.empty:
-            st.warning("No perfect matches found. Showing random courses instead.")
-            recommended_courses = course_catalog.sample(min(5, len(course_catalog)))
-        else:
-            recommended_courses = matching_courses
-
-        # New filtering based on dynamic preferred times and days
-        filtered_courses = []
-        for idx, row in recommended_courses.iterrows():
-            course_days = row['Days'] if pd.notna(row['Days']) else ""
-            course_time = row['Times'] if pd.notna(row['Times']) else ""
-            if matches_preferred_times(course_days, course_time, st.session_state.time_preferences):
-                filtered_courses.append(row)
-
-        recommended_courses = pd.DataFrame(filtered_courses)
-
-        # Try to fit into unit needs
-        selected_courses = []
-        total_units = 0
-
-        for idx, row in recommended_courses.iterrows():
-            if total_units + row['Units'] <= units_needed:
-                selected_courses.append(row)
-                total_units += row['Units']
-
-        if selected_courses:
-            st.subheader("🎓 Your Recommended Courses")
-            selected_df = pd.DataFrame(selected_courses)
-            st.dataframe(selected_df[['Course Name', 'Units', 'Times', 'Days']])
-        else:
-            st.error("Couldn't meet unit requirement with available courses. Try adjusting your preferences.")
-
-        # Email Placeholder
-        st.markdown("---")
-        st.subheader("📧 Send Your Schedule")
-        email = st.text_input("Enter your email address to receive your recommended schedule:")
-        send_email = st.button("Send Schedule")
-
-        if send_email:
-            st.success(f"Schedule would be emailed to {email} (placeholder)")
+    if send_email:
+        st.success(f"Schedule would be emailed to {email} (placeholder)")
 
 st.markdown("""
 ---
 
-*This is a demo version. Full NLP matching and auto-scheduling logic could be added in a full system!*
+*This is a demo version. In a full system, AI matching and real-time course scheduling would be implemented!*
 """)
