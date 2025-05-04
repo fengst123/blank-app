@@ -5,7 +5,7 @@ import PyPDF2
 st.set_page_config(page_title="Haas AI Course Planner", page_icon="📚")
 st.title("🎓 Haas AI-Powered Course Planner")
 
-st.write("Upload your materials and we'll recommend the best classes for you!")
+st.write("Upload your course catalog and materials, and we'll recommend the best classes for you!")
 
 # Uploads
 course_catalog_file = st.file_uploader("Upload Haas Course Catalog (Excel)", type=["xlsx"])
@@ -43,20 +43,20 @@ if submit:
         # Assume course_catalog has columns: 'Course Name', 'Units', 'Times', 'Days'
         st.success("Course catalog loaded!")
 
-        # Extract text from uploaded course descriptions
+        # Extract course info and resume text
         course_info_text = ""
-        for uploaded_file in course_info_files:
-            course_info_text += extract_text_from_pdf(uploaded_file)
+        if course_info_files:
+            for uploaded_file in course_info_files:
+                course_info_text += extract_text_from_pdf(uploaded_file)
 
-        # Extract text from resume (optional)
         resume_text = ""
         if resume_file:
             resume_text = extract_text_from_pdf(resume_file)
 
-        # Combine all focus areas for matching
+        # Combine focus areas + resume for better matching
         combined_focus_text = focus_areas + " " + resume_text
 
-        # Matching logic (simplified for demo)
+        # Matching logic
         matching_courses = course_catalog[course_catalog['Course Name'].str.contains(focus_areas, case=False, na=False)]
 
         if matching_courses.empty:
@@ -65,7 +65,7 @@ if submit:
         else:
             recommended_courses = matching_courses
 
-        # Filter by preferred days and times if available
+        # Filter by preferred days and times
         if preferred_days:
             recommended_courses = recommended_courses[recommended_courses['Days'].str.contains('|'.join(preferred_days), na=False)]
 
