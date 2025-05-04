@@ -14,14 +14,16 @@ resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 
 # User Inputs
 units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
-preferred_days = st.multiselect(
-    "Preferred Days of the Week:",
-    ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-)
-preferred_times = st.multiselect(
-    "Preferred Times:",
-    ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
-)
+
+st.write("Select your preferred times for each day:")
+day_time_preferences = {}
+days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+time_options = ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
+
+for day in days_of_week:
+    selected_times = st.multiselect(f"{day}:", time_options, key=day)
+    day_time_preferences[day] = selected_times
+
 focus_areas = st.text_area("What do you want to focus on this semester? (e.g., AI, Finance, Entrepreneurship)")
 
 submit = st.button("Generate Recommended Schedule")
@@ -32,6 +34,14 @@ def extract_text_from_pdf(file):
     for page in reader.pages:
         text += page.extract_text()
     return text
+
+def match_day_time(course_days, course_time, preferences):
+    for day in days_of_week:
+        if day in course_days:
+            for pref in preferences[day]:
+                if pref.split()[0] in course_time:
+                    return True
+    return False
 
 if submit:
     if not course_catalog_file:
@@ -65,12 +75,15 @@ if submit:
         else:
             recommended_courses = matching_courses
 
-        # Filter by preferred days and times
-        if preferred_days:
-            recommended_courses = recommended_courses[recommended_courses['Days'].str.contains('|'.join(preferred_days), na=False)]
+        # Filter by preferred days and times using the new day-time preferences
+        filtered_courses = []
+        for idx, row in recommended_courses.iterrows():
+            course_days = row['Days'] if pd.notna(row['Days']) else ""
+            course_time = row['Times'] if pd.notna(row['Times']) else ""
+            if match_day_time(course_days, course_time, day_time_preferences):
+                filtered_courses.append(row)
 
-        if preferred_times:
-            recommended_courses = recommended_courses[recommended_courses['Times'].str.contains('|'.join(preferred_times), case=False, na=False)]
+        recommended_courses = pd.DataFrame(filtered_courses)
 
         # Try to fit into unit needs (basic approach)
         selected_courses = []
