@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import PyPDF2
+import time
+from datetime import datetime
 
 st.set_page_config(page_title="Haas AI Course Planner", page_icon="📚")
 st.title("🎓 Haas AI-Powered Course Planner")
@@ -10,25 +12,23 @@ st.write("Upload your course catalog and materials, and we'll recommend the best
 # Uploads
 st.subheader("📚 Course Data Collection")
 
-# Simulated scraping buttons
-if "scraped_catalog" not in st.session_state:
-    st.session_state.scraped_catalog = False
-if "scraped_reviews" not in st.session_state:
-    st.session_state.scraped_reviews = False
+# Setup initial pretend scrape timestamp
+if "last_scraped_time" not in st.session_state:
+    # Pretend the last scrape was 2 days ago
+    past_time = datetime.now().timestamp() - (2 * 24 * 60 * 60)  # 2 days ago
+    st.session_state.last_scraped_time = datetime.fromtimestamp(past_time).strftime("%Y-%m-%d %H:%M:%S")
 
-col1, col2 = st.columns(2)
+# Display last scraped time
+st.info(f"Last scraped: {st.session_state.last_scraped_time}")
 
-with col1:
-    if st.button("🔎 Scrape Course Catalog"):
-        st.session_state.scraped_catalog = True
-        st.success("✅ Course catalog successfully scraped from the system!")
+# Refresh scrape button
+if st.button("🔄 Refresh Scrape"):
+    with st.spinner("Scraping latest course data..."):
+        time.sleep(2)  # simulate scraping delay
+    st.session_state.last_scraped_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    st.success("✅ Course catalog and reviews successfully refreshed!")
 
-with col2:
-    if st.button("🔎 Scrape Course Reviews"):
-        st.session_state.scraped_reviews = True
-        st.success("✅ Course reviews successfully scraped from the system!")
-
-# Upload resume still real (we need some user input)
+# Resume upload still real
 resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 # Setup for dynamic preferred times
 if "time_preferences" not in st.session_state:
