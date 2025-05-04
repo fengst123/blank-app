@@ -61,27 +61,17 @@ if submit:
 
     st.subheader("🎯 Recommended Schedule")
 
-    # Hardcoded output (you can modify this list however you like)
-    if "AI" in focus_areas or "Data" in focus_areas:
-        courses = [
-            {"Course Name": "Applied Machine Learning", "Units": 3, "Days": "Mon/Wed", "Times": "Morning"},
-            {"Course Name": "Data Strategy for Business", "Units": 2, "Days": "Tue/Thu", "Times": "Afternoon"},
-            {"Course Name": "AI Ethics and Society", "Units": 2, "Days": "Friday", "Times": "Morning"},
-        ]
-    elif "Finance" in focus_areas:
-        courses = [
-            {"Course Name": "Financial Modeling and Valuation", "Units": 3, "Days": "Mon/Wed", "Times": "Morning"},
-            {"Course Name": "Venture Capital", "Units": 2, "Days": "Tue/Thu", "Times": "Afternoon"},
-            {"Course Name": "Global Financial Markets", "Units": 2, "Days": "Friday", "Times": "Morning"},
-        ]
-    else:
-        courses = [
-            {"Course Name": "Leadership Communications", "Units": 2, "Days": "Mon", "Times": "Evening"},
-            {"Course Name": "Negotiations", "Units": 2, "Days": "Wed", "Times": "Afternoon"},
-            {"Course Name": "Marketing Strategy", "Units": 3, "Days": "Tue/Thu", "Times": "Morning"},
-        ]
+    # Hardcoded real output for your profile
+    courses = [
+        {"Course Name": "Negotiations and Conflict Resolution", "Units": 2, "Days": "Mon", "Times": "8AM–11AM", "Why Take This Class": "Build influence, persuasion, and conflict management — essential soft skills for PMs and leaders."},
+        {"Course Name": "Managing the New Product Development Process", "Units": 3, "Days": "Mon & Wed", "Times": "11AM–12:30PM", "Why Take This Class": "Learn frameworks for ideating, building, and launching new products — core PM skillset."},
+        {"Course Name": "Storytelling for Leadership", "Units": 1, "Days": "Tues", "Times": "2PM–5PM", "Why Take This Class": "Sharpen your ability to communicate vision, inspire teams, and rally stakeholders — critical leadership soft skill."},
+        {"Course Name": "Global Leadership", "Units": 3, "Days": "Tues", "Times": "4PM–6PM", "Why Take This Class": "Develop skills to lead diverse teams across cultures and markets — increasingly important for PMs at global companies."},
+        {"Course Name": "Opportunity Recognition: Technology & Entrepreneurship", "Units": 2, "Days": "Wed", "Times": "4PM–6PM", "Why Take This Class": "Train your product-sense muscle by spotting trends, customer needs, and innovation opportunities."},
+        {"Course Name": "Tech and the City", "Units": 3, "Days": "Tues & Thurs", "Times": "11AM–12:30PM", "Why Take This Class": "Explore how tech drives urban innovation — broadens strategic thinking about product ecosystems."},
+    ]
 
-    # Display "fake" schedule
+    # Convert to DataFrame for display
     courses_df = pd.DataFrame(courses)
     st.dataframe(courses_df)
 
@@ -93,6 +83,7 @@ if submit:
 
     if send_email:
         st.success(f"Schedule would be emailed to {email} (placeholder)")
+
 
 st.markdown("""
 ---
