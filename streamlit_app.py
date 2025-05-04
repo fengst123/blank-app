@@ -102,7 +102,7 @@ if st.session_state.submitted:
 
     if st.button("Send Schedule"):
         if email:
-            st.success(f"📧 Your schedule would be emailed to {email} (placeholder).")
+            st.success(f"📧 Your schedule would be emailed to {email}.")
         else:
             st.error("Please enter a valid email address.")
 
