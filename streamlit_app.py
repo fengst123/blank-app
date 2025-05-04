@@ -12,14 +12,44 @@ course_catalog_file = st.file_uploader("Upload Haas Course Catalog (Excel)", typ
 course_info_files = st.file_uploader("Upload Course Descriptions and Reviews (PDF only)", type=["pdf"], accept_multiple_files=True)
 resume_file = st.file_uploader("Upload Your Resume (PDF only)", type=["pdf"])
 
-# Time Preferences (still show nice UI but don't actually process)
+# Setup for dynamic preferred times
+if "time_preferences" not in st.session_state:
+    st.session_state.time_preferences = [{"times": [], "days": {day: False for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}}]
+
 time_options = ["Morning (before 12pm)", "Afternoon (12-5pm)", "Evening (after 5pm)"]
-days_of_week = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+short_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 st.subheader("🕰️ Preferred Times and Days")
-preferred_times = st.multiselect("Select your preferred times:", time_options)
-preferred_days = st.multiselect("Select your preferred days:", days_of_week)
 
+# Add / Remove preference logic
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("➕ Add Another Time Preference"):
+        st.session_state.time_preferences.append({"times": [], "days": {day: False for day in short_days}})
+with col2:
+    if st.button("➖ Remove Last Time Preference") and len(st.session_state.time_preferences) > 1:
+        st.session_state.time_preferences.pop()
+
+for idx, pref in enumerate(st.session_state.time_preferences):
+    st.markdown(f"**Preference #{idx+1}**")
+
+    # Time Multi-select
+    selected_times = st.multiselect(
+        f"Select Time(s) for Preference #{idx+1}",
+        options=time_options,
+        default=pref["times"],
+        key=f"times_{idx}"
+    )
+    st.session_state.time_preferences[idx]["times"] = selected_times
+
+    # Days - Checkboxes
+    st.write("Select Days:")
+    day_cols = st.columns(7)
+    for i, day in enumerate(short_days):
+        checked = st.session_state.time_preferences[idx]["days"][day]
+        new_checked = day_cols[i].checkbox(day, value=checked, key=f"day_{idx}_{day}_checkbox")
+        st.session_state.time_preferences[idx]["days"][day] = new_checked
 # Other Inputs
 units_needed = st.number_input("How many units do you need to take this semester?", min_value=1, max_value=30, value=10)
 focus_areas = st.text_area("What do you want to focus on this semester? (e.g., AI, Finance, Entrepreneurship)")
