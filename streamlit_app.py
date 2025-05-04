@@ -23,17 +23,23 @@ short_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 st.subheader("🕰️ Preferred Times and Days")
 for idx, pref in enumerate(st.session_state.time_preferences):
     st.markdown(f"**Preference #{idx+1}**")
-    cols = st.columns([2, 5])
-    with cols[0]:
-        selected_times = st.multiselect(f"Select Time(s) for Preference #{idx+1}", time_options, key=f"time_{idx}")
-    with cols[1]:
-        day_selection = []
-        day_cols = st.columns(7)
-        for i, day in enumerate(short_days):
-            toggle = day_cols[i].toggle(day, key=f"day_{idx}_{day}")
-            if toggle:
-                day_selection.append(days_of_week[i])
+    # Time multi-select
+    selected_times = st.multiselect(
+        f"Select Time(s) for Preference #{idx+1}", 
+        time_options, 
+        default=st.session_state.time_preferences[idx]["times"], 
+        key=f"times_{idx}"
+    )
     st.session_state.time_preferences[idx]["times"] = selected_times
+
+    # Day toggles
+    day_selection = []
+    st.write("Select Days:")
+    day_cols = st.columns(7)
+    for i, day in enumerate(short_days):
+        toggle = day_cols[i].toggle(day, key=f"day_{idx}_{day}")
+        if toggle:
+            day_selection.append(days_of_week[i])
     st.session_state.time_preferences[idx]["days"] = day_selection
 
 add_row = st.button("➕ Add Another Time Preference")
@@ -125,13 +131,4 @@ if submit:
         st.markdown("---")
         st.subheader("📧 Send Your Schedule")
         email = st.text_input("Enter your email address to receive your recommended schedule:")
-        send_email = st.button("Send Schedule")
-
-        if send_email:
-            st.success(f"Schedule would be emailed to {email} (placeholder)")
-
-st.markdown("""
----
-
-*This is a demo version. Full NLP matching and auto-scheduling logic could be added in a full system!*
-""")
+        send_email = st.button("Send Schedule")_
